@@ -13,8 +13,16 @@ export const connectDB = async (uri) => {
 
     console.log("MongoDB conectado correctamente");
   } catch (error) {
-    console.error("Error al conectar con MongoDB:", error.message);
-    process.exit(1);
+    // Los errores de selección de servidor de Mongo suelen incluir datos
+    // útiles (DNS, IP allowlist, credenciales), pero no debemos imprimir la URI.
+    const detail = String(error.message || "Error desconocido")
+      .replace(/mongodb(?:\+srv)?:\/\/[^\s"']+/gi, "mongodb://<URI_OCULTA>")
+      .replace(/(password|passwd|pwd)=([^&\s]+)/gi, "$1=<OCULTO>");
+    const diagnostic = new Error(
+      `No se pudo conectar con MongoDB (${error.name || "Error"}${error.code ? `, código ${error.code}` : ""}): ${detail}`,
+      { cause: error },
+    );
+    throw diagnostic;
   }
 };
 
